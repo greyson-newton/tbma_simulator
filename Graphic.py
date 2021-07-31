@@ -9,7 +9,6 @@ import datetime, os, math
 
 debug = False
 
-
 window = Tk()
 window.title("Muon Simulator")
 

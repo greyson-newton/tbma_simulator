@@ -6,7 +6,8 @@ from multpleScattering import *
 from logWriter import *
 from dataManager import *
 import pandas as pd
-class AI_Remote:
+
+class alignmentReport:
 	def __init__(self):
 		self.date = datetime.now().strftime("%Y%m%d-%H%M%S")
 		self.txtFilename = "log_" + self.date + "_.txt"
