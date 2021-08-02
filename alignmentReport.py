@@ -3,85 +3,110 @@ import os, math
 from datetime import datetime
 from GraphicMultpleScattering import *
 from multpleScattering import *
+import csv, os
 from logWriter import *
 from dataManager import *
 import pandas as pd
 
+
+class logWriter:
+	def __init__(self, textName):
+		self.textName = textName
+		self.log = open(self.textName, "w+")
+	def writeCSV(self, csvData, csvName):
+		example = csv.writer(open(csvName, 'w'))
+		example.writerows(csvData)
+	def writeTXT(self, minTimeIndex, minTimeCoordinates, nJobs):
+		self.minTimeIndex = minTimeIndex
+		if nJobs == 3 or nJobs > 3:
+			print("# 1: \n", self.minTimeIndex[0], "st Job",  file = self.log)
+			print("Design Position: " ,str(minTimeCoordinates[0]) , ",", str(minTimeCoordinates[1]), "," , str(minTimeCoordinates[2]) , 
+				"\nActual Position: ", str(minTimeCoordinates[3]) , "," , str(minTimeCoordinates[4]) , ",", str(minTimeCoordinates[5]), file=self.log)
+			print("Accuracy: ", str(minTimeCoordinates[18]), "Length: ", str(minTimeCoordinates[19]), file=self.log)
+
+			print("# 2: \n", self.minTimeIndex[1], "nd Job",  file = self.log)
+			print("Design Position: " ,str(minTimeCoordinates[6]) , ",", str(minTimeCoordinates[7]), "," , str(minTimeCoordinates[8]) , 
+				"\nActual Position: ", str(minTimeCoordinates[9]) , "," , str(minTimeCoordinates[10]) , ",", str(minTimeCoordinates[11]), file=self.log)
+			print("Accuracy: ", str(minTimeCoordinates[18]), "Length: ", str(minTimeCoordinates[19]), file=self.log)
+
+			print("# 3: \n", self.minTimeIndex[2], "rd Job",  file = self.log)
+			print("Design Position: " ,str(minTimeCoordinates[12]) , ",", str(minTimeCoordinates[13]), "," , str(minTimeCoordinates[14]) , 
+				"\nActual Position: ", str(minTimeCoordinates[15]) , "," , str(minTimeCoordinates[16]) , ",", str(minTimeCoordinates[17]), file=self.log)
+			print("Accuracy: ", str(minTimeCoordinates[18]), "Length: ", str(minTimeCoordinates[19]) , file=self.log)
+		elif nJobs == 2:
+			print("# 1: \n", self.minTimeIndex[0], "st Job",  file = self.log)
+			print("Design Position: " ,str(minTimeCoordinates[0]) , ",", str(minTimeCoordinates[1]), "," , str(minTimeCoordinates[2]) , 
+				"\nActual Position: ", str(minTimeCoordinates[3]) , "," , str(minTimeCoordinates[4]) , ",", str(minTimeCoordinates[5]), file=self.log)
+			print("Accuracy: ", str(minTimeCoordinates[12]), "Length: ", str(minTimeCoordinates[13]), file=self.log)
+
+			print("# 2: \n", self.minTimeIndex[1], "nd Job",  file = self.log)
+			print("Design Position: " ,str(minTimeCoordinates[6]) , ",", str(minTimeCoordinates[7]), "," , str(minTimeCoordinates[8]) , 
+				"\nActual Position: ", str(minTimeCoordinates[9]) , "," , str(minTimeCoordinates[10]) , ",", str(minTimeCoordinates[11]), file=self.log)
+			print("Accuracy: ", str(minTimeCoordinates[12]), "Length: ", str(minTimeCoordinates[13]), file=self.log)
+		elif nJobs == 1:
+			print("# 1: \n", self.minTimeIndex[0], "st Job",  file = self.log)
+			print("Design Position: " ,str(minTimeCoordinates[0]) , ",", str(minTimeCoordinates[1]), "," , str(minTimeCoordinates[2]) , 
+				"\nActual Position: ", str(minTimeCoordinates[3]) , "," , str(minTimeCoordinates[4]) , ",", str(minTimeCoordinates[5]), file=self.log)
+			print("Accuracy: ", str(minTimeCoordinates[6]), "Length: ", str(minTimeCoordinates[7]), file=self.log)
+		else:
+			print('no jobs', self.log)
+			print('no jobs')
+			#except:
+			#	print("couldnt write log")
+        
 class alignmentReport:
 	def __init__(self):
+
 		self.date = datetime.now().strftime("%Y%m%d-%H%M%S")
 		self.txtFilename = "log_" + self.date + "_.txt"
 		self.csvFilename = "log_" + self.date + "_.csv"
+        # add sorting option
 		self.log = logWriter(self.txtFilename)
-		self.count = 0
-		self.nJobs = 0
+
 		self.nIterations = []
 		self.nMomenta = []
 		self.SortByTime = False
 		self.SortByIterations = True
 
-	def start(self,sim_data):
-		#self.progressWindow = progressWindow()
-	
-		self.x, self.y, self.z, self.theta, self.eta, self.phi, self.d_x, self.d_y, self.d_z,self.d_theta, self.d_eta, self.d_phi, self.cham_w, self.cham_h, self.Accuracy, self.momentum = AI_DATA[0], AI_DATA[1], AI_DATA[2], int(AI_DATA[3]), int(AI_DATA[4]), int(AI_DATA[5]), int(AI_DATA[6]), int(AI_DATA[7]), int(AI_DATA[8])
+	def report(self):
+        #printing data
+        if self.SortByTime:		
+            rankedTimes = sorted(self.times)
+            rankedIndexes = []
+            for i in range(len(rankedTimes)):
+                rankedIndexes.append(rankedTimes.index(self.times[i]))
+            rankedIndices = sorted(rankedIndexes)
+            parameters = ["time_rank", "design_position", "actual_position" , "time_elapsed(seconds)", "momentum", "# of iterations","job_number"] 
+            csvData = []
+            csvData.append(parameters)
+            for i in rankedIndices:
+                design_position = [self.zPos[rankedIndices[i]], self.yPos[rankedIndices[i]], math.degrees(self.phiPos[rankedIndices[i]])]
+                actual_position = [self.zPos[rankedIndices[i]] + self.DzPos[rankedIndices[i]], self.yPos[rankedIndices[i]] + self.DyPos[rankedIndices[i]], math.degrees(self.phiPos[rankedIndices[i]] + self.DphiPos[rankedIndices[i]])]
+                momemtumString = str(self.momentum) + "/" + str(self.nMomenta[rankedIndices[i]])
+                appendData = [rankedIndices[i] , design_position, actual_position, self.times[rankedIndices[i]], momemtumString, self.nIterations[rankedIndices[i]], rankedIndexes[i]]
+                
+                csvData.append(appendData)
 
-		graphic=True
+            self.log.writeCSV(csvData, self.csvFilename)
+        if self.SortByIterations:
+            rankedIterations = sorted(self.nIterations)
+            rankedIndexes = []
+            for i in range(len(rankedIterations)):
+                rankedIndexes.append(rankedIterations.index(self.nIterations[i]))
+            rankedIndices = sorted(rankedIndexes)
+            parameters  = ["iteration_rank", "design_position", "actual_position" , "time_elapsed(seconds)", "momentum", "# of iterations","job_number"]
+            csvData = []
+            csvData.append(parameters)
+            for i in rankedIndices:
+                design_position = [self.zPos[rankedIndices[i]], self.yPos[rankedIndices[i]], math.degrees(self.phiPos[rankedIndices[i]])]
+                actual_position = [self.zPos[rankedIndices[i]] + self.DzPos[rankedIndices[i]], self.yPos[rankedIndices[i]] + self.DyPos[rankedIndices[i]], math.degrees(self.phiPos[rankedIndices[i]] + self.DphiPos[rankedIndices[i]])]
+                momemtumString = str(self.momentum) + "/" + str(self.nMomenta[rankedIndices[i]])
 
-		if graphic:
-			program = GraphicMultpleScattering(self.z,self.y,self.phi, self.dz, self.dy, self.dp, self.Length, self.Accuracy, self.momentum)
+                appendData = [rankedIndices[i] , design_position, actual_position, self.times[rankedIndices[i]], momemtumString, self.nIterations[rankedIndices[i]], rankedIndexes[i]]
+                
+                csvData.append(appendData)
 
-		self.count+=1
-		print("\n-------------------------------------------------------------")
-		print("Job Number: ", self.count, " |",  " Time: ", program.returnTime(), "|", "nIterations: ", program.returnNumberOfIterations())
-		print("--------------------------------------------------------------\n")
-		self.times.append(program.returnTime())
-		self.DzPos.append(DzValue) 
-		self.DyPos.append(DyValue) 
-		self.DphiPos.append(DpValue)
-		self.zPos.append(self.z)
-		self.yPos.append(self.y)
-		self.phiPos.append(self.phi)
-		self.nIterations.append(program.returnNumberOfIterations())
-		self.nMomenta.append(program.returnMomentum())
-
-			#printing data
-			if self.SortByTime:		
-				rankedTimes = sorted(self.times)
-				rankedIndexes = []
-				for i in range(len(rankedTimes)):
-					rankedIndexes.append(rankedTimes.index(self.times[i]))
-				rankedIndices = sorted(rankedIndexes)
-				parameters = ["time_rank", "design_position", "actual_position" , "time_elapsed(seconds)", "momentum", "# of iterations","job_number"] 
-				csvData = []
-				csvData.append(parameters)
-				for i in rankedIndices:
-					design_position = [self.zPos[rankedIndices[i]], self.yPos[rankedIndices[i]], math.degrees(self.phiPos[rankedIndices[i]])]
-					actual_position = [self.zPos[rankedIndices[i]] + self.DzPos[rankedIndices[i]], self.yPos[rankedIndices[i]] + self.DyPos[rankedIndices[i]], math.degrees(self.phiPos[rankedIndices[i]] + self.DphiPos[rankedIndices[i]])]
-					momemtumString = str(self.momentum) + "/" + str(self.nMomenta[rankedIndices[i]])
-					appendData = [rankedIndices[i] , design_position, actual_position, self.times[rankedIndices[i]], momemtumString, self.nIterations[rankedIndices[i]], rankedIndexes[i]]
-					
-					csvData.append(appendData)
-
-				self.log.writeCSV(csvData, self.csvFilename)
-			if self.SortByIterations:
-				rankedIterations = sorted(self.nIterations)
-				rankedIndexes = []
-				for i in range(len(rankedIterations)):
-					rankedIndexes.append(rankedIterations.index(self.nIterations[i]))
-				rankedIndices = sorted(rankedIndexes)
-				parameters  = ["iteration_rank", "design_position", "actual_position" , "time_elapsed(seconds)", "momentum", "# of iterations","job_number"]
-				csvData = []
-				csvData.append(parameters)
-				for i in rankedIndices:
-					design_position = [self.zPos[rankedIndices[i]], self.yPos[rankedIndices[i]], math.degrees(self.phiPos[rankedIndices[i]])]
-					actual_position = [self.zPos[rankedIndices[i]] + self.DzPos[rankedIndices[i]], self.yPos[rankedIndices[i]] + self.DyPos[rankedIndices[i]], math.degrees(self.phiPos[rankedIndices[i]] + self.DphiPos[rankedIndices[i]])]
-					momemtumString = str(self.momentum) + "/" + str(self.nMomenta[rankedIndices[i]])
-
-					appendData = [rankedIndices[i] , design_position, actual_position, self.times[rankedIndices[i]], momemtumString, self.nIterations[rankedIndices[i]], rankedIndexes[i]]
-					
-					csvData.append(appendData)
-
-				self.log.writeCSV(csvData, self.csvFilename)
+            self.log.writeCSV(csvData, self.csvFilename)
 
 	def showPlots(self):
 

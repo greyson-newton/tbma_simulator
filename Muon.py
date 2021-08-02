@@ -1,20 +1,25 @@
 from geometry import *
+from math import pi
 
+
+# be an implementation of a Vector3
 class Muon:
     def __init__(self):   #takes
         self.track=[Vec3(0.,0.,0.,),Vec3(0.,0.,0.,)]
         self.path=[Vec3(0.,0.,0.,),Vec3(0.,0.,0.,)]
-
         self.typicalScatteringDistance = 10
         self.angleConstant = 40
         self.speedDecreaseConstant = .95
         self.magneticField = .2
         self.massOverCharge = 1.0
         self.pi = pi
-    def propagate(self,p_f,speed,charge):
-        self.track=[self.track[0],p_f]
+        self.trac_hit=Vec3()
+        self.scatter_hit=Vec3()
+    def propagate(self,p_f):
+        self.track[1]=make_vector(self.track[0],p_f)
     def scatter(self):
         self.path=[]
+
     #  VERBATUM FROM iterateMuon class, needs to be implemented into muon class
     # def iterateMuon(angleInitial, speed, charge, xInitial, yInitial):
     #     #radiusOfCurvature = massOverCharge*speed/magneticField #negative means curve the other way

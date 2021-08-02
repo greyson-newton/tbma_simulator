@@ -30,7 +30,6 @@ datamenu.add_command(label = "Sort by nIterations", command = lambda: sortByIter
 
 menubar.add_cascade(label = "Options", menu = optionmenu)
 menubar.add_cascade(label = "Data Options", menu = datamenu)
-sim_remote = sim_remote()
 
 pred_x, pred_y, pred_z, pred_phi = 0,0,0,0
 dz, dy, dx, dphi = 0,0,0,0
