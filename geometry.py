@@ -2,7 +2,9 @@
 #https://developer.rhino3d.com/guides/rhinopython/python-rhinoscriptsyntax-introduction/
 from math import *
 from collections import namedtuple
-from types import *  
+from types import *
+
+from matplotlib.cbook import index_of  
 # we can test for lambda type, e.g.:
 # class intersect_line_w_plane():
     # Need a method to check 
@@ -41,6 +43,7 @@ class Point3(object):
                 self.x, self.y,self.z = float(p[0]),float(p[1]),float(p[2])
             else:
                 print("wtf")
+                # print(type(p))
         elif isinstance(p,Point3):
             self.x, self.y,self.z = p.x,p.y,p.z
         else:
@@ -48,9 +51,11 @@ class Point3(object):
 
     def add(self,p): #returns a point representing sum of two points  
         if isinstance(p,list):
-            return Point3(self.x+p[0],self.y+p[1],self.z+p[2])
+            self.x+=p[0]
+            self.y+=p[1]
+            self.z+=p[2]
         elif type(p) == Point3:
-            return Point3(self.x+p.x,self.y+p.y,self.z+p.z)
+            return Point3([self.x+p.x,self.y+p.y,self.z+p.z])
         else:
             print("invalid")
             return None
@@ -63,7 +68,10 @@ class Point3(object):
             print("invalid")
             return None
     def scale(self,fact):
-        self.x,self.y,self.z=self.x*fact,self.y*fact,self.z*fact
+        if type(fact)==Point3:
+            self.x,self.y,self.z=self.x*fact.x,self.y*fact.y,self.z*fact.z
+        else:
+            self.x,self.y,self.z=self.x*fact,self.y*fact,self.z*fact
     def to_string(self):
         return "Point(%s,%s)"%(self.x,self.y,self.z) 
     def distance(self, p):
@@ -81,7 +89,14 @@ class Point3(object):
         return "(%s,%s,%s)"%(self.x,self.y,self.z) 
     def set(self,coord):
         self.x,self.y,self.z=coord[0],coord[1],coord[2]
-
+zero_pt = Point3([0.,0.,0.])
+def is_zero_pt(pt):
+    if pt.x==zero_pt.x:
+        if pt.y==zero_pt.y:
+            if pt.z==zero_pt.z:
+                return True
+    else:
+        return False
 def return_angles(l):
     x,y,z = l[0],l[1],l[2]
     if x!=0:
@@ -103,14 +118,14 @@ class line:
         self.magnitudes=[0.,0.,0.] 
         self.angles= [0.,0.,0.]
         if type(p)==list:
-            print('line given list')
+            # print('line given list')
             if type(p[0])==Point3 and len(p)==2:
-                print('     of 2 Points')
+                # print('     of 2 Points')
                 self.magnitudes=[p[1].x-p[0].x,p[1].y-p[0].y,p[1].z-p[0].z]     
                 self.pts=[p[0],p[1]]
                 self.angles= return_angles(self.magnitudes)
             elif type(p[0])==float and len(p)==3:
-                print('     of 3 floats')
+                # print('     of 3 floats')
                 p = Point3(p)
                 self.magnitudes=[p.x,p.y,p.z]     
                 self.pts=[Point3([0.,0.,0.]),p]
@@ -119,8 +134,8 @@ class line:
                 print(type(p[0]))
             
         elif type(p)==Point3:
-            print('line given one point - a 000 tail')
-            print(p.x,p.y,p.z)
+            # print('line given one point - a 000 tail')
+            # print(p.x,p.y,p.z)
             self.pts=[Point3([0.,0.,0.]),p]
             self.magnitudes=[p.x,p.y,p.z] 
             self.angles= return_angles(self.magnitudes)
@@ -131,11 +146,11 @@ class line:
         # if sqrt(self.magnitudes[0]**2+self.magnitudes[1]**2+self.magnitudes[2]**2)!=0:
         #     self.normalize()
     def normalize(self):
-        print("NORMALIZING")
+        # print("NORMALIZING")
         fact=(1/sqrt(self.magnitudes[0]**2+self.magnitudes[1]**2+self.magnitudes[2]**2))
-        print(fact)
+        # print(fact)
         self.magnitudes = [mag*fact for mag in self.magnitudes]
-        print("DONE")
+        # print("DONE")
     def set(self,p):
         self.pts[0],self.pts[1]=p[0],p[1]
         self.normalize()
@@ -144,21 +159,38 @@ class line:
         self.pts[0].scale(fact)
         self.pts[1].scale(fact)
         # return line(self.pts)
+    def sub(self,l):
+        s = [self.pts[0].x-l.pts[0].x,self.pts[0].y-l.pts[0].y,self.pts[0].z-l.pts[0].z]
+        p = [self.pts[1].x-l.pts[1].x,self.pts[1].y-l.pts[1].y,self.pts[1].z-l.pts[1].z]
+        return line([s,p])
+    def radd(self,l):
+        if type(l)==list:
+            self.pts[0].x+=l[0]
+            self.pts[0].y+=l[1]
+            self.pts[0].z+=l[2]
+            self.pts[1].x+=l[0]
+            self.pts[1].y+=l[1]
+            self.pts[1].z+=l[2]
 
+    #make this global, not a part of a class
+    def add(self,l):
+        s = [self.pts[0].x+l.pts[0].x,self.pts[0].y+l.pts[0].y,self.pts[0].z+l.pts[0].z]
+        p = [self.pts[1].x+l.pts[1].x,self.pts[1].y+l.pts[1].y,self.pts[1].z+l.pts[1].z]
+        return line([s,p])
     
     def out(self):
         p1o,p2o=self.pts[0].out(),self.pts[1].out()
         return "\n  Line\n      magnitude (%s,%s,%s)"%(self.magnitudes[0],self.magnitudes[1],self.magnitudes[2])+"\n        Endpts[ "+p1o+' -> '+p2o+' ]'
 def cross(b,a):
-    print("LINE CROSS")
+    # print("LINE CROSS")
     x,y,z = b.magnitudes[0],b.magnitudes[1],b.magnitudes[2]
     ax,ay,az = a.magnitudes[0],a.magnitudes[1],a.magnitudes[2]
-    print(x,y,z,ax,ay,az)
-    print(y*az-z*ay,x*az-z*ax,x*ay-y*ax)
+    # print(x,y,z,ax,ay,az)
+    # print(y*az-z*ay,x*az-z*ax,x*ay-y*ax)
     mag = Point3([y*az-z*ay , -(x*az-z*ax), x*ay-y*ax])
-    print(mag.x,mag.y,mag.z)
+    # print(mag.x,mag.y,mag.z)
     cross = Vec3(mag)
-    print(len(cross.lines))
+    # print(len(cross.lines))
     # print(cross.head_magnitude)
     return mag       
 class Vec2:
@@ -169,7 +201,9 @@ class Vec3:
     def __init__(self,p1):
         #A list of points - like a linked list.
         #Other words a list of lines, with info on directional magnitude
-
+        self.pts = [Point3([0.,0.,0.]),Point3([0.,0.,0.])]
+        if type(p1)==Point3:
+            self.pts.append(p1)
         #put in tuple - connect them all
         self.lines = [[],[]]
         if type(p1)==list:
@@ -181,43 +215,76 @@ class Vec3:
                 if len(p1)==2:
                     l = line(p1)  
                     self.lines[0]=[l]
+                    self.pts=[p1[0],p1[1]]
                 else:
-                    print('handling list of pts greater than 2')
+                    # print('handling list of pts greater than 2')
                     count=0
+                    self.pts[0]=p1[0]
                     lastpt=p1[0]
                     for pt in p1:
                         if count==0:
                             lastpt=pt
                             count+=1
                         if count==1:
+                            self.pts[1]=pt
                             l=line([lastpt,pt])
                             self.lines[0]=[l]
                             count+=1
                             lastpt=pt
                         if count==2:
+                            self.pts.append(pt)
                             l=line([lastpt,pt])
                             self.lines[1]=[l]
                             count+=1
                             lastpt=pt
                         else:
+                            self.pts.append(pt)
                             l=line([lastpt,pt])
                             self.lines+=[l]
                             count+=1
                             lastpt=pt
         else:
             if type(p1)==Point3:
-                print('else')
+                # print('else')
                 l=line(p1)
-                print(l.out())
+                # print(l.out())
                 self.lines[0]=l
-                                        #last point in last line, first point in first line
+                                       #last point in last line, first point in first line
+
         self.head=Point3()
         self.tail=Point3()
         self.head_magnitude = [self.head.x-self.tail.x,self.head.y-self.tail.y,self.head.z-self.tail.z]
         self.dir_vector = [0.,0.,0.]
         self.check_vec()
-        self.update_vector()
+        # self.update_vector()
 
+    def update_pts(self,translation):
+        # print("UPDATE PTS")
+        if type(translation)==list:
+            translation=Point3(translation)
+        count=0
+        # print("length ",len(self.pts))
+        size =len(self.pts)
+        if size>4:
+            self.pts=[self.pts[size-4],self.pts[size-3],self.pts[size-2],self.pts[size-1]]
+        for pt in self.pts:
+            # print(pt.out())
+            if count==0:
+                continue
+            pt.x+=float(translation.x)
+            pt.y+=float(translation.y)
+            pt.z+=float(translation.z)
+            count+=1
+        self.update_lines()
+        return self.pts
+    def update_lines(self):
+        # print("length ",len(self.lines))
+
+        self.lines[0]=line([self.pts[0],self.pts[1]])
+        self.lines[1]=line([self.pts[1],self.pts[2]])
+        self.lines[2]=line([self.pts[2],self.pts[3]])
+        self.lines[3]=line([self.pts[3],self.pts[0]])
+        
     def __add__(self,p):   #adds a point or coordinate list to vector 
         if isinstance(p,list):
             if type(p[0])==float:
@@ -241,14 +308,18 @@ class Vec3:
         if type(a) == list:
             return Vec3([a.head.x-self.head.x, a.head.y-self.y, a.head.z-self.z])
         elif type(a) == Vec3:
-            return Vec3([self.head.x-a.head.x, self.head.y-a.head.y, self.head.z-a.head.z])
+            pts=[]
+            if len(self.pts)==len(a.pts):
+                for p1,p2 in zip(self.pts,a.pts):
+                    pts.append(Point3([p1.x-p2.x,p1.y-p2.y,p1.z-p2.z]))
+                return Vec3(pts)
         else:
             print("invalid")
 
     # def cross(self,a,b=None):
     #     print("VEC3 CROSS")
     #     if b==None:
-    #         return Vec3([self.y*a.head.z-self.z*a.head.y , -(self.head.x*a.head.z-self.z*a.head.x), self.head.x*a.head.y-self.y*a.head.x])
+    #         return Vec3([self.y*a.head.z-self.z*a.head.y , -(self.head[0]*a.head.z-self.z*a.head.x), self.head.x*a.head.y-self.y*a.head.x])
     #     else:
     #         if type(b) == list:
     #             return Vec3([a.head.y*b[3]-a.head.z*b[2] , -(a.head.x*b[3]-a.head.z*b[1]), a.head.x*b[2]-a.head.y*b[1]])
@@ -258,7 +329,15 @@ class Vec3:
     #             print("invalid")
     def dot(self,a,b=None):
         if b==None:
-            return a.head.x*self.head.x+a.head.y*self.y+a.head.z*self.z
+            if len(a.pts)==len(self.pts):
+                dot=0.
+                if len(a.pts)==2:
+                    return a.pts.x*self.pts.x+a.pts.y*self.y+a.pts.z*self.pts.z
+                elif len(a.pts)>2:
+                    for pt,ap in zip(self.pts,a.pts):
+                        dot+=ap.x*pt.x+ap.y*pt.y+ap.z*pt.z
+                else:
+                    print("cant dot")
         else:
             if type(b) == list:
                 return a.head.x*b[1]+a.head.y*b[2]+a.head.z*b[3]
@@ -275,7 +354,7 @@ class Vec3:
         return Vec3(x, y, z)
     def scale_by_factor(self, fact):
         # MULTIPLIES A self OBJECT WITH Mat3 OBJECT AND RETURNS A NEW self 
-        print("SCALING")
+        # print("SCALING")
         li=[]
         for l in self.lines:
             pts = [Point3([l.pts[0].x*fact,l.pts[0].y*fact,l.pts[0].z*fact]),
@@ -289,7 +368,7 @@ class Vec3:
         if type(self.head) ==Point3 and type(self.tail) == Point3:
             self.head_magnitude=[self.head.x-self.tail.x,self.head.y-self.tail.y,self.head.z-self.tail.z] 
         self.check_vec()
-        self.out_all()
+        # self.out_all()
     def ret_magnitude(self):
         return hypot(self.head.x,self.head.y,self.head.z)
     def out_head(self):
@@ -307,11 +386,11 @@ class Vec3:
                 if type(l)==line:
                     print(l.out())
     def normalize(self):
-        print("NORMALIZING")
+        # print("NORMALIZING")
         fact=(1/sqrt(self.head_magnitude[0]**2+self.head_magnitude[1]**2+self.head_magnitude[2]**2))
-        print(fact)
+        # print(fact)
         norm = self.scale_by_factor(fact)
-        print("DONE")
+        # print("DONE")
         return norm
     def check_vec(self):
         count=0
@@ -337,27 +416,32 @@ class Vec3:
             else:
                 if type(self.lines[count])==line:
                     ind.append(count)
-                    print(type(l))
+                    # print(type(l))
                     l.append(self.lines[count])
                     count+=1
         # print(indexes)
         # print(ind)
         self.lines = []
-        for every in l:
-            self.lines.append(every)
+
+        for every in l:     
+            if is_zero_pt(every.pts[0]) and is_zero_pt(every.pts[1]):
+                continue
+            else:
+                
+                self.lines.append(every)
 
     def ret_tail_head(self):
         if len(self.lines)==1:
             return [self.lines[0].pts[0],self.lines[0].pts[1]]
-        print(len(self.lines))
+        # print(len(self.lines))
         return [self.lines[0].pts[0],self.lines[-1].pts[1]]
-    def update_vector(self):
-        x,y,z=0.,0.,0.
-        for l in self.lines:
-            x+=l.magnitudes[0]
-            y+=l.magnitudes[1]
-            z+=l.magnitudes[2]
-        self.head_magnitude = [x,y,z]
+    # def update_vector(self):
+    #     x,y,z=0.,0.,0.
+    #     for l in self.lines:
+    #         x+=l.magnitudes[0]
+    #         y+=l.magnitudes[1]
+    #         z+=l.magnitudes[2]
+    #     self.head_magnitude = [x,y,z]
 
 def make_vector(p1,p2=None):
     if p2==None:
@@ -365,6 +449,17 @@ def make_vector(p1,p2=None):
     else:
         v0,v1 = Vec3(p1),Vec3(p2)
         return v1.sub(v0)
+def dot(a,b):
+    dot=0.
+    if len(a.pts)==2:
+        return a.pts.x*b.pts.x+a.pts.y*b.y+a.pts.z*b.pts.z
+        print("line dot")
+    elif len(a.pts)>2:
+        dot=a.pts[-1].x*b.pts[-1].x+a.pts[-1].y*b.pts[-1].y+a.pts[-1].z*b.pts[-1].z
+        # print("dot ",dot," type ",type(dot))
+        return dot
+    else:
+        print("cant dot")
 
 class Mat3:
     # 3X3 MATRIX INITIALIZED WITH ALL 0's
@@ -380,17 +475,20 @@ class Mat3:
                             data[2]]
 
 def normal_vec(square):
-    print("NORMAL VECTOR")
+    # print("NORMAL VECTOR")
 
     if type(square)==Vec3:
         if len(square.lines)>2:
             norm=Vec3(cross(square.lines[0],square.lines[1]))
-            print("NORMALIZING")
-            fact=(1/sqrt(norm.head_magnitude[0]**2+norm.head_magnitude[1]**2+norm.head_magnitude[2]**2))
-            print("factor "+str(fact))
-            norm.scale_by_factor(fact)
-            print("DONE w NORMAL VECTOR")
-            print(norm.out_all())
+            # print("NORMALIZING")
+            fact=sqrt(norm.head_magnitude[0]**2+norm.head_magnitude[1]**2+norm.head_magnitude[2]**2)
+            if fact!=0:
+                fact=(1/fact)
+                norm.scale_by_factor(fact)
+            # print("factor "+str(fact))
+            
+            # print("DONE w NORMAL VECTOR")
+            # print(norm.out_all())
             return norm
         else:
             norm=Vec3([0.,0.,0.])
@@ -398,25 +496,29 @@ def normal_vec(square):
 
 def scale_by_matrix(line, mat3):
     # MULTIPLIES A Vec3 OBJECT WITH Mat3 OBJECT AND RETURNS A NEW Vec3 
+    ref = line
     p1,p2=line.pts[0],line.pts[1]
+    # print("scaling : " + line.out())
     p1.set([p1.x * mat3.matrix[0][0] + p1.y * mat3.matrix[0][1] + p1.z * mat3.matrix[0][2],
             p1.x * mat3.matrix[1][0] + p1.y * mat3.matrix[1][1] + p1.z * mat3.matrix[1][2],
             p1.x * mat3.matrix[2][0] + p1.y * mat3.matrix[2][1] + p1.z * mat3.matrix[2][2]])
 
-    p2.set([p2.x * mat3.matrix[0][0] + p2.y * mat3.matrix[0][1] + p2.z * mat3.matrix[0][2],
+    p1.set([p2.x * mat3.matrix[0][0] + p2.y * mat3.matrix[0][1] + p2.z * mat3.matrix[0][2],
             p2.x * mat3.matrix[1][0] + p2.y * mat3.matrix[1][1] + p2.z * mat3.matrix[1][2],
             p2.x * mat3.matrix[2][0] + p2.y * mat3.matrix[2][1] + p2.z * mat3.matrix[2][2]])
+    # print(" ->"+ line.out())
+    # print("difference - "+ref.sub(line).out())
 class Transform:
     # IT TRANSFORMS THE X AND Y FROM NORMALIZED SPACE TO SCREEN SPACE WITH PROJECTION APPLIED
-    def worldSpaceTransform(self, vec3, w, h):
-        if vec3.z == 0:
-            vec3.z = 0.001
-        zInverse = 1/ vec3.z
-        xTransformed = ((vec3.x * zInverse) + 1) * (w/2)
-        yTransformed = ((-vec3.y * zInverse) + 1) * (h/2)
+    def worldSpaceTransform(vec3, w, h):
+        if vec3.magnitudes[0] == 0:
+            vec3.magnitudes[0] = 0.001
+        zInverse = 1/ vec3.magnitudes[0] 
+        xTransformed = ((vec3.magnitudes[2] * zInverse) + 1) * (w/2)
+        yTransformed = ((-vec3.magnitudes[1] * zInverse) + 1) * (h/2)
         xTransformed = str(xTransformed)[:6]
         yTransformed = str(yTransformed)[:6]
-        return Vec2(float(xTransformed), float(yTransformed))
+        return [float(xTransformed), float(yTransformed)]
 
 # Implement y and z axis rotation matrices
 class Rotation: 
@@ -462,26 +564,59 @@ class Square:
         self.square_vec=Vec3(pts)
         self.current_rotation=[0.,0.,0.]
         self.normal_vector = normal_vec(self.square_vec)
-        print("SQUARE NORMAL :")
-        print(self.normal_vector.lines)
+        # print("SQUARE NORMAL :")
+        # print(self.normal_vector.lines)
 
 
     def out(self):
-        print("SQUARE")
-        print("\nnormal vector: "+self.normal_vector.lines[0].out())
+        # print("SQUARE")
+        # print("\nnormal vector: "+self.normal_vector.lines[0].out())
         return self.square_vec.out_all(square=True)
+    def plot_out(self):
+        # if rot==True:
+        #     x,y=[],[]
+        #     for l in self.square_vec.lines:
+        #         x.append(Transform.worldSpaceTransform(l,5,5)[0])
+        #         y.append(Transform.worldSpaceTransform(l,5,5)[1])
+        #         return [x,y]
+        # else:
+        # x,y,z=[],[],[]
+        # for pt in self.square_vec.pts:
+        #     x.append(pt.x)
+        #     y.append(pt.y)
+        #     z.append(pt.z)
+        # return zip(x,y,z)
 
+        
+        
+        
+        return [[self.square_vec.pts[0].x,self.square_vec.pts[1].x,
+                self.square_vec.pts[2].x,self.square_vec.pts[3].x,
+                self.square_vec.pts[0].x],
+            
+                [self.square_vec.pts[0].y,self.square_vec.pts[1].y,
+                self.square_vec.pts[2].y,self.square_vec.pts[3].y,
+                self.square_vec.pts[0].y],
+
+                [self.square_vec.pts[0].z,self.square_vec.pts[1].z,
+                self.square_vec.pts[2].z,self.square_vec.pts[3].z,
+                self.square_vec.pts[0].z]]
+    
     def rotate(self,rotations):
         # ROTATES A Vec3 (a) BY GIVEN THETA AND AXIS
         
         current_rotation=[0.,0.,0.]
-        theta,eta,phi=rotations[0],rotations[1],rotations[2]
+        if type(rotations)==Point3:
+            theta,eta,phi=rotations.x,rotations.y,rotations.z
+        else:
+            theta,eta,phi=rotations[0],rotations[1],rotations[2]
 
         # mx,my,mz = rotateX(theta)
         if theta != 0:
             current_rotation[0]=theta
             for l in self.square_vec.lines:
                 scale_by_matrix(l, rotateX(theta))
+                # l.scale(Point3([cos(theta),.,1.]))
         if eta != 0:
             current_rotation[1]=eta
             for l in self.square_vec.lines:
@@ -490,61 +625,81 @@ class Square:
             current_rotation[2]=phi
             for l in self.square_vec.lines:
                 scale_by_matrix(l, rotateZ(phi))
-
+        self.normal_vector = normal_vec(self.square_vec)
+        # for l in self.square_vec.lines:
+        #     l.scale(self.normal_vector)
         self.endpoints=[self.square_vec.lines[0].pts[0],self.square_vec.lines[1].pts[0],
                         self.square_vec.lines[2].pts[0], self.square_vec.lines[3].pts[0]]
-        self.normal_vector = normal_vec(self.square_vec)
         return self.current_rotation
     # def update(self):
-
-    def intersect_with(self,muon, epsilon=1e-6):
-        """
-        p0, p1: Define the line.
-        p_co, p_no: define the plane:
-            p_co Is a point on the plane (plane coordinate).
-            p_no Is a normal vector defining the plane direction;
-                (does not need to be normalized).
-
-        Return a Vector or None (when the intersection can't be found).
-        """
-
-
-        line = muon.track
-        dot = self.normal_vector.dot(line)
-
-        if abs(dot) > epsilon:
-            # The factor of the point between p0 -> p1 (0 - 1)
-            # if 'fac' is between (0 - 1) the point intersects with the segment.
-            # Otherwise:
-            #  < 0.0: behind p0.
-            #  > 1.0: infront of p1.
-            w = make_vector(self.origin,muon.track.tail)
-            fac = -self.normal_vector.dot(w) / dot
-            line = line.scale_by_factor(fac)
-
-            boundy,boundz = [0.,0.],[0.,0.]
-            for endpt in self.endpoints:
-                if endpt.y > boundy[2]:
-                    boundy[2] = endpt.y
-                if endpt.y < boundy[1]:
-                    boundy[1] = endpt.y
-
-                if endpt.z > boundz[2]:
-                    boundz[2] = endpt.z
-                if endpt.z < boundz[1]:
-                
-                    boundz[1] = endpt.z
-                
-            if line[1].y > boundy[2] or line[1].y < boundy[1] or line[1].z > boundz[2] or line[1].z < boundz[1]:
-                print("outside chamber")
-                return None
+    # def update_endpoint(self,index):
+    #     if index=1:
+    #     if index=2:
+    #     if index=3:
+    #     if index=4:
+    def has_rotation(self):
+        for rot in self.current_rotation:
+            if rot !=0:
+                return False
             else:
-                print("intersection found at: ")
-                return muon.hit.add(line[1])
-        else:
-            # The segment is parallel to plane.
-            print("parralell")
-            return None
+                return True
+    def translate(self,translations):
+        # flip_rot=[]
+        # if self.has_rotation():
+        #     for rot in self.current_rotation:
+        #         flip_rot.append(-rot)
+        #     self.rotate(flip_rot)
+
+        # l_c=0
+        # for l in self.square_vec.lines:
+        #     for pt in l.pts:
+        #         print(pt.out())
+
+        self.endpoints=self.square_vec.update_pts(translations)
+            #     l.pts[0].add(translations)
+            #     # l.pts[1].add(translations)
+            # else:
+            #     for pt in l.pts:
+            #         pt.add(translations)
+        # self.rotate(self.current_rotation)
+        # self.square_vec.lines[2].pts[0].add(translations)
+        # self.square_vec.lines[1].pts[1].add(translations)
+        # self.square_vec.lines[3].pts[0].add(translations)
+
+        # self.endpoints=[self.square_vec.lines[0].pts[0],self.square_vec.lines[1].pts[0],
+        #                 self.square_vec.lines[2].pts[0], self.square_vec.lines[3].pts[0]]
+        self.rotate(self.current_rotation)
+    def intersect_with(self,muon, origin,epsilon=1e-6):
+
+        x,y,z=[],[],[]
+        for endpt in self.endpoints:
+            z.append(endpt.z)
+            y.append(endpt.y)
+            x.append(endpt.x)
+        boundz,boundy,boundx=[z[0],z[1]],[y[0],y[1]],[x[0],x[1]]
+        for xp in x:
+            if xp<boundy[0]:
+                boundy[0]=xp
+            if xp>boundy[1]:
+                boundy[1]=xp
+        for zp in z:
+            if zp<boundz[0]:
+                boundz[0]=zp
+            if zp>boundz[1]:
+                boundz[1]=zp
+        for yp in y:
+            if yp<boundy[0]:
+                boundy[0]=yp
+            if yp>boundy[1]:
+                boundy[1]=yp
+        
+        
+
+        # for zp,yp in zip(boundz,boundy):
+        #     print(type(zp),type(yp))
+        # for p in w.pts:
+        #     print(type(p))
+
 
 # p4 = Point3([-4.,0.,4.])
 # p3 = Point3([9.,-3.,-1.])
@@ -555,3 +710,50 @@ class Square:
 # f=5
 # v.scale_by_factor(f)
 # print(v.out_all)
+
+
+# old intersection
+        # """
+        # p0, p1: Define the line.
+        # p_co, p_no: define the plane:
+        #     p_co Is a point on the plane (plane coordinate).
+        #     p_no Is a normal vector defining the plane direction;
+        #         (does not need to be normalized).
+
+        # Return a Vector or None (when the intersection can't be found).
+        # """
+        # # print(self.normal_vector.out_all())
+        # # print("muon",muon.track.out_all())
+        # self.normal_vector.check_vec()
+        # # print(type(muon.track),type(self.normal_vector))
+        # d = dot(muon.track,self.normal_vector)
+        
+        # if abs(d) > epsilon:
+        #     # The factor of the point between p0 -> p1 (0 - 1)
+        #     # if 'fac' is between (0 - 1) the point intersects with the segment.
+        #     # Otherwise:
+        #     #  < 0.0: behind p0.
+        #     #  > 1.0: infront of p1.
+        #     w = make_vector(origin,muon.p_f)
+        #     w.check_vec()
+        #     # print(w.out_all())
+        #     if d==0:
+        #         d=.00001
+        #     fac = -1*(dot(self.normal_vector,w) / d)
+        #     w.scale_by_factor(fac)
+        #     # print(w.out_all)
+    #     if len(w.lines)==1:
+    #         hit=w.lines[0].pts[1]
+    #         print("hit candidate: "+hit.out())
+    #         if hit.y > boundy[1] or hit.y < boundy[0] or hit.z > boundz[1] or hit.z < boundz[0]:
+    #             print("outside chamber")
+    #             return None
+    #         else:
+    #             print("intersection found at: ",hit.out())
+    #             return hit
+    #     else:
+    #         print("no go")
+    # else:
+    #     # The segment is parallel to plane.
+    #     print("parralell")
+    #     return None
