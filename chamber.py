@@ -7,7 +7,11 @@ import matplotlib.pyplot as plt
 import time
 from mpl_toolkits import mplot3d
 class Chamber:
-    def __init__(self,dim,origin,rotation):
+    def __init__(self,dim,origin,rotation,actual=None):
+        if actual==None:
+            self.design=True
+        else:
+            self.design=False
         self.w,self.h = dim[0],dim[1]
         self.origin=origin
         self.rotation=rotation
@@ -16,9 +20,10 @@ class Chamber:
         self.endpoints=[Point3([x,y+h,z+w]),Point3([x,y+h,z-w]),Point3([x,y-h,z-w]),Point3([x,y-h,z+w]),Point3([x,y+h,z+w])]
         # for pt in self.endpoints:
         #     print(pt.out())
-        self.square=Square(self.endpoints)
+        self.square=Square(self.endpoints,self.origin)
+
         self.rotate(rotation)
-        self.translate(origin)
+        # self.translate(origin)
     def rotate(self,rotation):
     # def translate_by(self,translations):
     #     self.square = [Vec3.__add__(pt,t) for pt,t in self.plane]        
@@ -33,7 +38,19 @@ class Chamber:
         #     print("chamber endpts ",pt.out())
         # for pt in self.square.endpoints:
         #     print("square endpoints",pt.out())    
-        self.square.translate(translation)        
+        self.square.translate(translation,self.design) 
+        # for pt in self.endpoints:
+        #     print("chamber ",pt.out())
+            # pt.x+=translation.x
+            # pt.y+=translation.y
+            # pt.z+=translation.z
+        # for pt in self.square.endpoints:
+        #     print("square ",pt.out())
+    
+        self.endpoints=self.square.endpoints     
+        self.origin=self.square.origin
+        
+         
         # print("AFTER TRANSLATION")
         # for pt in self.endpoints:
         #     print("chamber endpts ",pt.out())
@@ -57,7 +74,8 @@ class Chamber:
     def intersect(self,muon_vec):
         return self.square.intersect_with(muon_vec,self.origin)
     def align(self):
-        self.translate([1.5,0,0])
+        self.translate(Point3([5.,0.,0.]))
+        # print(self.endpoints)
         time.sleep(1)
 
             # def init(self,translations,rotations):
