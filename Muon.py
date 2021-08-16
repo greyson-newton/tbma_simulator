@@ -29,6 +29,7 @@ class Muon:
     def scatteringDistance(self):
         scatteringDistance =  self.typicalScatteringDistance/(10*random.random() )
         return scatteringDistance
+
     def scatteringAngle(self,speed):
         sigma = self.angleConstant/(speed)
         deltaAngle = sigma*2*(.5-random.random())

@@ -49,8 +49,8 @@ class Chamber:
     
         self.endpoints=self.square.endpoints     
         self.origin=self.square.origin
-        
-         
+
+
         # print("AFTER TRANSLATION")
         # for pt in self.endpoints:
         #     print("chamber endpts ",pt.out())
@@ -74,10 +74,39 @@ class Chamber:
     def intersect(self,muon_vec):
         return self.square.intersect_with(muon_vec,self.origin)
     def align(self):
+        print("    Calculating Residuals")
+        # residual = self.get_residuals(track_slope,hit)
         self.translate(Point3([5.,0.,0.]))
         # print(self.endpoints)
         time.sleep(1)
-
+    # def get_residuals(self,track_slope,des_hit,act_hit):
+    #     residual_y=des_hit.y-act_hit.y
+    #     residual_x=des_hit.x-act_hit.x
+    #     x_steps = [-stepSizes[0], 0, stepSizes[0]]
+    #     y_steps = [-stepSizes[1], 0, stepSizes[1]]
+    #     z_steps = [-stepSizes[1], 0, stepSizes[1]]
+    #     theta_steps = [-stepSizes[2], 0, stepSizes[2]]
+    #     eta_steps = [-stepSizes[2], 0, stepSizes[2]]
+    #     phi_steps = [-stepSizes[2], 0, stepSizes[2]]
+    #     minValue = 1000
+    #     lowesState = [0,0,0]
+    #     noDisValue = 0
+    #     xSTD = []
+    #     for x_dis in x_steps:
+    #         for y_dis in y_steps:
+    #             for z_dis in z_steps:
+    #                 for t_dis in theta_steps:
+    #                     for e_dis in eta_steps:
+    #                         for p_dis in phi_steps:
+    #                             predictedResidual =  y_dis - track_slope[1]*z_dis - act_hit.y*track_slope[1]*t_dis + act_hit.x*track_slope[1]*e_dis+act_hit.x*p_dis
+    #                             squaredDifference = np.power(predictedResidual - residual_y,2)
+    #                             squaredDifference = squaredDifference[~np.isnan(squaredDifference)]
+    #                             stdDev = np.mean(squaredDifference)
+    #                             if stdDev < minValue and not (x_dis == 0 and y_dis == 0 and t_dis ==0):
+    #                                 lowesState = [x_dis,y_dis, t_dis]
+    #                                 minValue  = stdDev
+    #                             if x_dis == 0 and y_dis == 0 and t_dis ==0:
+    #                                 noDisValue = stdDev
             # def init(self,translations,rotations):
     #     self.rotate_by(rotations)
     #     self.translate_by(translations)
